@@ -1,0 +1,53 @@
+#!/bin/sh
+# by Soomin K., Apr.12,2020
+C_P='\033[35m'  # Purple
+C_R='\033[31m'  # Red
+C_Y='\e[0;33m'  # Yellow
+C_G='\e[0;32m'  # Green
+C_B='\e[0;34m'  # Blue
+C_W='\e[5m'     # Wink (Blink)
+C_N='\e[0m'     # Normal
+
+temp_file=/sys/class/thermal/thermal_zone0/temp
+if [ ! -f $temp_file ]; then
+  echo "Error! No temperature file found: $temp_file"
+  exit 1
+fi
+
+cpu_temp=$(cat "$temp_file")
+#cpu_temp=65020  # debug
+temp1=$((cpu_temp/1000))
+temp2=$((cpu_temp - temp1*1000))
+temp_f=$(( (cpu_temp*9/5 + 32000)/1000 ))
+
+t_clr=$C_B
+t_bar=$C_B█$C_G■$C_Y■$C_R■$C_P■$C_N
+if [ $cpu_temp -gt 60000 ]; then
+  t_clr=$C_P
+  t_bar=$C_B■$C_G■$C_Y■$C_R■$C_P$C_W█$C_N
+else
+  if [ $cpu_temp -gt 50000 ]; then
+    t_clr=$C_R
+    t_bar=$C_B■$C_G■$C_Y■$C_R█$C_P■$C_N
+  else
+    if [ $cpu_temp -gt 40000 ]; then
+      t_clr=$C_Y
+      t_bar=$C_B■$C_G■$C_Y█$C_R■$C_P■$C_N
+    else
+      if [ $cpu_temp -gt 30000 ]; then
+        t_clr=$C_G
+        t_bar=$C_B■$C_G█$C_Y■$C_R■$C_P■$C_N
+      fi
+    fi
+  fi
+fi
+
+add_info=
+gpu_cmd=$(command -v vcgencmd)  # check if the command exists
+if [ ! -z gpu_cmd ]; then
+  gpu_t=$(vcgencmd measure_temp  | sed -En "s/temp=(.*)'C/\1/p")
+  volt=$(vcgencmd measure_volts | sed -En "s/volt=(.*)V/\1/p")
+  add_info=" GPU:$t_clr$gpu_t$C_N'C ${volt}V"
+fi
+
+echo "$(date) $t_bar $t_clr$temp1.$temp2$C_N'C ($t_clr$temp_f$C_N'F)$add_info"
