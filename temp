@@ -44,7 +44,7 @@ fi
 
 add_info=
 gpu_cmd=$(command -v vcgencmd)  # check if the command exists
-if [ ! -z gpu_cmd ]; then
+if [ ! -z "$gpu_cmd" ]; then
   gpu_t=$(vcgencmd measure_temp  | sed -En "s/temp=(.*)'C/\1/p")
   volt=$(vcgencmd measure_volts | sed -En "s/volt=(.*)V/\1/p")
   add_info=" GPU:$t_clr$gpu_t$C_N'C ${volt}V"
